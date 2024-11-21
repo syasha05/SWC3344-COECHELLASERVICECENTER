@@ -1,0 +1,138 @@
+import java.util.ArrayList;
+import java.util.List;
+
+// This class represents customer information
+public class CustomerInfo {
+    // Unique customer identifier
+    private int custId;
+    // Name of the customer
+    private String name;
+    // Vehicle plate number of the customer
+    private String vehiclePlate;
+    // Phone number of the customer
+    private String phoneNumber;
+
+    // Track the count of services for the customer
+    private int serviceId;
+
+    private String serviceTypes;
+
+    private double serviceCost;
+
+    private String serviceDate;
+
+    private String estimatedCompletionTime;
+
+    private int totalService; 
+    // Track the assigned lane for the customer
+    // List of services made by the customer
+    private List<ServiceInfo> services;
+
+    // Constructor to initialize customer information
+    public CustomerInfo(int custId, String name, String vehiclePlate, String phoneNumber, int totalService) {
+        this.custId = custId;
+        this.name = name;
+        this.vehiclePlate = vehiclePlate;
+        this.phoneNumber = phoneNumber;
+        this.totalService = totalService;
+        this.services = new ArrayList<>(); 
+    }
+    // Add overloaded constructor to handle all fields
+    public CustomerInfo(int custId, String name, String vehiclePlate, String phoneNumber, int totalService, int serviceId,
+    String serviceTypes, double serviceCost, String serviceDate, String estimatedCompletionTime) {
+        this.custId = custId;
+        this.name = name;
+        this.vehiclePlate = vehiclePlate;
+        this.phoneNumber = phoneNumber;
+        this.totalService = totalService;
+        this.serviceId = serviceId;
+        this.serviceTypes = serviceTypes;
+        this.serviceCost = serviceCost;
+        this.serviceDate = serviceDate;
+        this.estimatedCompletionTime = estimatedCompletionTime;
+    }
+
+    // Getter methods
+    public int getCustId() {
+        return custId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getVehiclePlate() {
+        return vehiclePlate;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public int getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(int serviceId) { 
+        this.serviceId = serviceId; 
+    }
+
+    public String getServiceTypes() {
+        return serviceTypes;
+    }
+
+    public void setServiceTypes(String serviceTypes) { 
+        this.serviceTypes = serviceTypes; 
+    }    
+
+    public double getServiceCost() {
+        return serviceCost;
+    }
+
+    public void setServiceCost(double serviceCost) { 
+        this.serviceCost = serviceCost; 
+    }
+
+    public String getServiceDate() {
+        return serviceDate;
+    }
+
+    public void setServiceDate(String serviceDate) { 
+        this.serviceDate = serviceDate; 
+    }
+
+    public String getEstimatedCompletionTime() {
+        return estimatedCompletionTime;
+    }
+
+    public void setEstimatedCompletionTime(String estimatedCompletionTime) { 
+        this.estimatedCompletionTime = estimatedCompletionTime; 
+    }
+
+    public int getTotalservice() {
+        return totalService;
+    }
+
+    public void addService(ServiceInfo service) {
+        services.add(service);
+    }
+
+    public void setTotalService(int totalService)
+    {
+        this.totalService = totalService;
+    }
+    
+    // Services getter
+    public List<ServiceInfo> getServices() {
+        return services;
+    }
+
+
+    // Overriding toString() to format the customer info
+    @Override
+    public String toString() {
+        return custId + " | " + name + "\n" +
+        "Vehicle Plate Number: " + vehiclePlate + "\n" +
+        "Phone Number: " + phoneNumber + "\n" + "Total Service:" + totalService;
+    }
+}
