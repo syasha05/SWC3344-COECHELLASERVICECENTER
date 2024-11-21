@@ -1,0 +1,69 @@
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class WelcomePage extends JFrame implements ActionListener {
+    private JButton wlcButton;
+
+    public WelcomePage() {
+        // Set up the frame
+        setTitle("Coechella Entrance");
+        setSize(800, 710);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        
+        // Create two labels for the title with multiline effect
+        JLabel titleLabel1 = new JLabel("COCHELLA SERVICE CENTER", SwingConstants.CENTER);
+        titleLabel1.setFont(new Font("Arial", Font.BOLD, 26));
+        JLabel titleLabel2 = new JLabel("Founded by Syasha, Zainab, Izzati and Radhiah", SwingConstants.CENTER);
+        titleLabel2.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        // Create a panel for the title and add the title labels to it
+        JPanel titlePanel = new JPanel(new GridLayout(2, 1));
+        titlePanel.add(titleLabel1);
+        titlePanel.add(titleLabel2);
+
+        // Create an ImageIcon logo
+        ImageIcon logo = new ImageIcon("chl1.jpg");
+        JLabel logoLabel = new JLabel(logo, SwingConstants.CENTER);
+
+        // Create a tagline label
+        JLabel taglineLabel = new JLabel("WE PROVIDE, WE ASSIST, WE HAPPY!", SwingConstants.CENTER);
+        taglineLabel.setFont(new Font("Arial", Font.ITALIC, 18));
+
+        // Create the welcome button
+        wlcButton = new JButton("WELCOME");
+        wlcButton.addActionListener(this);
+
+        // Create the main panel with BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        mainPanel.add(logoLabel, BorderLayout.CENTER);
+        
+        // Create a panel for the tagline and button, and add them to it
+        JPanel footerPanel = new JPanel(new GridLayout(2, 1, 0, 10));
+        footerPanel.add(taglineLabel);
+        footerPanel.add(wlcButton);
+
+        // Add the footer panel to the main panel's south region
+        mainPanel.add(footerPanel, BorderLayout.SOUTH);
+        
+
+        // Add the main panel to the frame
+        add(mainPanel);
+        setVisible(true);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == wlcButton) {
+            dispose();
+            new CoechellaService(); 
+        }
+    }
+
+    public static void main(String[] args) {
+        new WelcomePage();
+    }
+}
