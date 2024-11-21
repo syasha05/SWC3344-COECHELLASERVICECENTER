@@ -1,0 +1,481 @@
+// Import required libraries for the program
+import javax.swing.*; // For graphical user interface components
+import java.awt.*; // For GUI layouts and colors
+import java.io.*; // For reading and writing files
+import java.util.LinkedList; // For LinkedList data structure
+import java.util.Queue; // For Queue interface
+import java.util.Stack; // For Stack data structure
+import java.util.Set; // For Set interface
+import java.util.stream.Collectors; // For stream operations
+import java.util.HashSet; // For HashSet implementation
+
+public class CoechellaService extends JFrame {
+    // Constants for system limits
+    private static final int MAX_CUSTOMERS = 100; // Maximum number of customers allowed
+    private static final int MAX_LANE_SIZE = 5; // Maximum size for each service lane
+
+    // Data structures for managing customers
+    private Stack<CustomerInfo> completeStack = new Stack<>(); // Stack for completed payments
+    private Queue<CustomerInfo> lane1Queue = new LinkedList<>(); // Queue for Lane 1
+    private Queue<CustomerInfo> lane2Queue = new LinkedList<>(); // Queue for Lane 2
+    private Queue<CustomerInfo> lane3Queue = new LinkedList<>(); // Queue for Lane 3
+    private LinkedList<CustomerInfo> customerList = new LinkedList<>(); // List of customers
+    private Set<Integer> servedCustomers = new HashSet<>(); // Set to track served customers by their ID
+
+    // UI Components
+    private JLabel customerCountLabel; // Label to display the number of customers
+    private JButton listDataButton, addCustButton, nextQueueButton; // Buttons for various actions
+    private JButton[] payButton, recButton; // Buttons for payment and receipt actions per lane
+    private JTextArea[] queueContents; // Text areas to display the contents of each lane
+
+    // Variables for lane assignment batching
+    private int customerCount = 0; // Counter for total customers
+    private int lane1BatchCount = 0, lane2BatchCount = 0; // Batch counters for lanes
+    private boolean assignToLane1Next = true; // Flag to alternate lane assignment
+
+    // Constructor for the CoachellaService GUI
+    public CoechellaService() {
+        // JFrame properties
+        setTitle("Coachella Service Centre"); // Window title
+        setSize(1050, 730); // Window dimensions
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Exit application on close
+        setLocationRelativeTo(null); // Center window on screen
+
+        // Main panel for the application layout
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(new Color(255, 182, 193)); // Light pink background
+        add(mainPanel); // Add panel to the frame
+
+        // Top panel with customer count label and buttons
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(new Color(255, 182, 193)); // Same background color as main panel
+        customerCountLabel = new JLabel("Number of Customers: 0", SwingConstants.CENTER); // Initial customer count
+        customerCountLabel.setFont(new Font("Arial", Font.BOLD, 21)); // Set font style and size
+        customerCountLabel.setForeground(Color.WHITE); // White text color
+        topPanel.add(customerCountLabel, BorderLayout.NORTH); // Add label to the top of the top panel
+
+        // Button panel to hold action buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10)); // Flow layout with spacing
+        buttonPanel.setBackground(new Color(255, 182, 193)); // Match background color
+
+        // Create and style buttons
+        addCustButton = new JButton("Add New Customer");
+        listDataButton = new JButton("List of Data");
+        nextQueueButton = new JButton("Next Queue");
+
+        Color buttonColor = new Color(255, 105, 180); // Hot pink for buttons
+        JButton[] buttons = {addCustButton, listDataButton, nextQueueButton};
+        for (JButton button : buttons) {
+            button.setBackground(buttonColor); // Set button background color
+            button.setForeground(Color.WHITE); // Set button text color
+            buttonPanel.add(button); // Add button to the button panel
+        }
+
+        topPanel.add(buttonPanel, BorderLayout.CENTER); // Add button panel to the center of top panel
+        mainPanel.add(topPanel, BorderLayout.NORTH); // Add top panel to the north of main panel
+
+        // Center panel for displaying lanes and their contents
+        JPanel centerPanel = new JPanel(new GridLayout(1, 3, 10, 10)); // Grid layout for three lanes
+        centerPanel.setBackground(new Color(240, 240, 240)); // Neutral background
+        queueContents = new JTextArea[3]; // Array for text areas to display queue contents
+        payButton = new JButton[3]; // Array for payment buttons
+        recButton = new JButton[3]; // Array for receipt buttons
+
+        // Create panels for each lane
+        for (int i = 0; i < 3; i++) {
+            JPanel counterPanel = new JPanel(new BorderLayout(10, 10)); // Border layout for lane panels
+            counterPanel.setBackground(new Color(255, 182, 193)); // Match main panel background
+            counterPanel.setBorder(BorderFactory.createLineBorder(new Color(255, 105, 180), 3)); // Add border
+
+            JLabel counterLabel = new JLabel("Counter " + (i + 1), JLabel.CENTER); // Counter label
+            counterLabel.setFont(new Font("Arial", Font.BOLD, 16)); // Font styling
+            counterLabel.setOpaque(true); // Make label background visible
+            counterLabel.setBackground(buttonColor); // Hot pink background
+            counterLabel.setForeground(Color.WHITE); // White text color
+            counterPanel.add(counterLabel, BorderLayout.NORTH); // Add label to top of counter panel
+
+            queueContents[i] = new JTextArea(); // Text area for lane contents
+            queueContents[i].setEditable(false); // Make text area non-editable
+            queueContents[i].setFont(new Font("Monospaced", Font.PLAIN, 16)); // Monospaced font for alignment
+            JScrollPane scrollPane = new JScrollPane(queueContents[i]); // Scroll pane for text area
+            counterPanel.add(scrollPane, BorderLayout.CENTER); // Add scroll pane to center of counter panel
+
+            // Panel for lane buttons
+            JPanel buttonPanelCounter = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5)); // Flow layout for buttons
+            buttonPanelCounter.setBackground(new Color(255, 182, 193)); // Match background color
+
+            payButton[i] = new JButton("Process Payment"); // Button for processing payments
+            recButton[i] = new JButton("Print Receipt"); // Button for printing receipts
+
+            JButton[] laneButtons = {payButton[i], recButton[i]}; // Array of lane buttons
+            for (JButton btn : laneButtons) {
+                btn.setBackground(buttonColor); // Set button background color
+                btn.setForeground(Color.WHITE); // Set button text color
+                buttonPanelCounter.add(btn); // Add button to lane's button panel
+            }
+
+            // Add action listeners for buttons
+            int laneIndex = i; // Track lane index for button actions
+            payButton[i].addActionListener(e -> processPayment(laneIndex)); // Process payment action
+            recButton[i].addActionListener(e -> displayReceipts()); // Display receipt action
+
+            counterPanel.add(buttonPanelCounter, BorderLayout.SOUTH); // Add button panel to bottom of counter panel
+            centerPanel.add(counterPanel); // Add counter panel to center panel
+        }
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER); // Add center panel to main panel
+
+        // Add action listeners for top-level buttons
+        addCustButton.addActionListener(e -> addNewCustomer()); // Add new customer action
+        listDataButton.addActionListener(e -> showCustomerData()); // Show customer data action
+        nextQueueButton.addActionListener(e -> processNextQueue()); // Process next queue action
+
+        setVisible(true); // Make the frame visible
+    }
+
+    private void addNewCustomer() {
+        // Check if customer limit is already reached
+        if (customerCount >= MAX_CUSTOMERS) {
+            JOptionPane.showMessageDialog(this, "Customer limit reached! No new customers can be added.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        File file = new File("CustomerList.txt");
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(this, "CustomerList.txt file not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int customersAdded = 0;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+
+            // Read customers from file until the list is full or file ends
+            while ((line = reader.readLine()) != null) {
+                if (customerCount >= MAX_CUSTOMERS) {
+                    break;
+                }
+
+                // Split and validate the data from the line
+                String[] data = line.split(",");
+                if (data.length < 10) {
+                    JOptionPane.showMessageDialog(this, "Invalid data format in CustomerList.txt! Skipping entry.", "Warning", JOptionPane.WARNING_MESSAGE);
+                    continue;
+                }
+
+                try {
+                    // Parse customer details and add to the list
+                    CustomerInfo customer = new CustomerInfo(
+                            Integer.parseInt(data[0].trim()),  // Customer ID
+                            data[1].trim(),                   // Name
+                            data[2].trim(),                   // Vehicle Plate Number
+                            data[3].trim(),                   // Phone Number
+                            Integer.parseInt(data[4].trim()), // Total Services
+                            Integer.parseInt(data[5].trim()), // Service ID
+                            data[6].trim(),                   // Service Types
+                            Double.parseDouble(data[7].trim()), // Service Cost
+                            data[8].trim(),                   // Service Date
+                            data[9].trim()                    // Estimated Completion Time
+                        );
+
+                    customerList.add(customer);
+                    customersAdded++;
+                    customerCount++;
+                } catch (NumberFormatException ex) {
+                    // Simply skip the invalid entry and continue
+                    continue;
+                }
+            }
+
+            // Update the customer count label
+            customerCountLabel.setText("Number of Customers: " + customerCount);
+            // Show the total number of customers added
+            JOptionPane.showMessageDialog(this, customersAdded + " customers successfully added to the waiting list.", "Info", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error reading CustomerList.txt!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+        private void showCustomerData() {
+        JFrame dataFrame = new JFrame("Customer and Service Info");
+        dataFrame.setSize(480, 640);
+        dataFrame.setLocationRelativeTo(this);
+        dataFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+
+        // ScrollPane for the JTextArea
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        dataFrame.add(scrollPane);
+
+        File file = new File("CustomerList.txt");
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(this, "CustomerList.txt file not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Read the file and display data
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            StringBuilder dataBuilder = new StringBuilder();
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+
+                // Ensure there's enough data (at least 8 fields)
+                if (data.length >= 10) {
+                    dataBuilder.append("*********************************************\n")
+                    .append("Customer ID: ").append(data[0].trim()).append("\n")
+                    .append("Name: ").append(data[1].trim()).append("\n")
+                    .append("Vehicle Plate Number: ").append(data[2].trim()).append("\n")
+                    .append("Phone Number: ").append(data[3].trim()).append("\n")
+                    .append("Total Services: ").append(data[4].trim()).append("\n")
+                    .append("Service ID: ").append(data[5].trim()).append("\n")
+                    .append("Service Cost: ").append(data[7].trim()).append("\n")
+                    .append("Service Date: ").append(data[8].trim()).append("\n")
+                    .append("Estimate Completion Time: ").append(data[9].trim()).append("\n");
+
+                    // Handle multiple service types (splitting by "|")
+                    String[] serviceTypes = data[6].trim().split("\\|");
+                    dataBuilder.append("Service Type(s): \n");
+                    for (String serviceType : serviceTypes) {
+                        dataBuilder.append("  - ").append(serviceType.trim()).append("\n");
+                    }
+
+                    dataBuilder.append("*********************************************\n\n");
+                }
+            }
+
+            textArea.setText(dataBuilder.toString());
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error reading file!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        dataFrame.setVisible(true);
+    }
+
+    private void processNextQueue() {
+        if (customerList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No more customers in the waiting list!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        int assignedToLane1 = 0;
+        int assignedToLane2 = 0;
+        int assignedToLane3 = 0;
+        boolean alternateLane1 = true;  // This will help alternate between Lane 1 and Lane 2 for customers with fewer than 3 services
+
+        // Loop through the customer list and assign to lanes
+        while (!customerList.isEmpty()) {
+            // Get the next customer
+            CustomerInfo nextCustomer = customerList.poll(); // Get the next customer
+            if (nextCustomer == null) continue;
+
+            boolean assigned = false;
+            if (nextCustomer.getTotalservice() <= 3) {
+                // Assign customers with fewer than 3 services alternately to Lane 1 or Lane 2
+                if (lane1Queue.size() < MAX_LANE_SIZE && assignedToLane1 < 5) {
+                    lane1Queue.add(nextCustomer);
+                    assignedToLane1++;
+                    assigned = true;
+                } else if (lane2Queue.size() < MAX_LANE_SIZE && assignedToLane2 < 5) {
+                    lane2Queue.add(nextCustomer);
+                    assignedToLane2++;
+                    assigned = true;
+                } else {
+                    // If Lane 1 and Lane 2 are full, put the customer back in the queue
+                    customerList.addLast(nextCustomer);
+                    break;  // Stop processing further for now, we will try again next time
+                }
+            } else {
+                // Customers with more than 3 services go to Lane 3
+                if (lane3Queue.size() < MAX_LANE_SIZE && assignedToLane3 < 5) {
+                    lane3Queue.add(nextCustomer);
+                    assignedToLane3++;
+                    assigned = true;
+                } else {
+                    // If Lane 3 is full, put the customer back in the queue
+                    customerList.addLast(nextCustomer);
+                    break;  // Stop processing for now
+                }
+            }
+
+            // If the customer couldn't be assigned to a lane, put them back in the customer list
+            if (!assigned) {
+                customerList.addLast(nextCustomer); // Re-add the customer to the waiting list
+                break;  // Stop processing for now, we will try again next time
+            }
+        }
+
+        // Update the customer count after processing
+        customerCount -= (assignedToLane1 + assignedToLane2 + assignedToLane3);
+        customerCountLabel.setText("Number of Customers: " + customerCount);
+
+        // Display a summary of assignments
+        JOptionPane.showMessageDialog(
+            this,
+            "Batch processed:\n"
+            + "Lane 1: " + assignedToLane1 + " customers\n"
+            + "Lane 2: " + assignedToLane2 + " customers\n"
+            + "Lane 3: " + assignedToLane3 + " customers",
+            "Batch Assignment",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+
+        // Refresh the UI to display updated queues
+        updateQueueContents();
+    }
+    
+    private void processPayment(int laneIndex) {
+        Queue<CustomerInfo> targetQueue = switch (laneIndex) {
+                case 0 -> lane1Queue;
+                case 1 -> lane2Queue;
+                case 2 -> lane3Queue;
+                default -> null;
+            };
+
+        if (targetQueue == null || targetQueue.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Queue is empty or invalid!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        CustomerInfo servedCustomer = targetQueue.poll(); // Serve the customer
+        completeStack.push(servedCustomer); // Add to completed stack
+        servedCustomers.add(servedCustomer.hashCode()); // Track served customer
+        updateQueueContents();
+        JOptionPane.showMessageDialog(this, "Payment processed for \n" + servedCustomer.toString(), "Payment", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private boolean assignToLane(CustomerInfo customer) {
+        // If the customer has 3 or more services, assign them directly to Lane 3
+        if (customer.getTotalservice() >= 3) {
+            if (lane3Queue.size() < MAX_LANE_SIZE) {
+                lane3Queue.add(customer);
+                return true;
+            }
+            // If Lane 3 is full, return false
+            return false;
+        }
+
+        // If the customer has less than 3 services, assign them to either Lane 1 or Lane 2
+        if (lane1Queue.size() < MAX_LANE_SIZE) {
+            lane1Queue.add(customer);
+            return true;
+        } else if (lane2Queue.size() < MAX_LANE_SIZE) {
+            lane2Queue.add(customer);
+            return true;
+        }
+
+        // If both Lane 1 and Lane 2 are full, return false (no space available)
+        return false;
+    }
+
+    private void loadCustomerData() {
+        // Check if customerList is empty
+        if (customerList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No data added. Please add new customers first.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        File file = new File("CustomerList.txt");
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(this, "File not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length >= 10) {  // Ensure there are at least 4 elements for custId, custName, vehiclePlate, and phoneNumber
+                    CustomerInfo customer = new CustomerInfo(
+                            Integer.parseInt(data[0].trim()),  // Customer ID
+                            data[1].trim(),                   // Name
+                            data[2].trim(),                   // Vehicle Plate Number
+                            data[3].trim(),                   // Phone Number
+                            Integer.parseInt(data[4].trim()), // Total Services
+                            Integer.parseInt(data[5].trim()), // Service ID
+                            data[6].trim(),                   // Service Types
+                            Double.parseDouble(data[7].trim()), // Service Cost
+                            data[8].trim(),                   // Service Date
+                            data[9].trim()                    // Estimated Completion Time
+                        );
+                    customerList.add(customer);
+                    assignToLane(customer);
+                }
+            }
+            updateQueueContents();
+        } catch (IOException | NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Error reading file!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    // Define the updateQueueContents method
+    private void updateQueueContents() {
+        queueContents[0].setText(lane1Queue.stream().map(CustomerInfo::toString).collect(Collectors.joining("\n\n")));
+        queueContents[1].setText(lane2Queue.stream().map(CustomerInfo::toString).collect(Collectors.joining("\n\n")));
+        queueContents[2].setText(lane3Queue.stream().map(CustomerInfo::toString).collect(Collectors.joining("\n\n")));
+    }
+
+    private void displayReceipts() {
+        if (completeStack.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No completed payments to show.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Build receipt information
+        StringBuilder receiptBuilder = new StringBuilder("**** Completed Payments ****\n\n");
+        for (CustomerInfo customer : completeStack) {
+            receiptBuilder.append("Service Date: ").append(customer.getServiceDate()).append("\n")
+            .append("Customer ID: ").append(customer.getCustId()).append("\n")
+            .append("Name: ").append(customer.getName()).append("\n")
+            .append("Vehicle Plate Number: ").append(customer.getVehiclePlate()).append("\n")
+            .append("Phone Number: ").append(customer.getPhoneNumber()).append("\n")
+            .append("Service ID: ").append(customer.getServiceId()).append("\n");
+
+            // Handle multiple service types (splitting by "|")
+            String[] serviceTypes = customer.getServiceTypes() != null && !customer.getServiceTypes().isEmpty()
+                ? customer.getServiceTypes().trim().split("\\|") // Split by "|"
+                : new String[0]; // Default empty array if service types are missing
+
+            // Display service types
+            if (serviceTypes.length > 0) {
+                receiptBuilder.append("Service Type(s): \n");
+                for (String serviceType : serviceTypes) {
+                    receiptBuilder.append("  - ").append(serviceType.trim()).append("\n");
+                }
+            } else {
+                receiptBuilder.append("Service Type(s): Not specified\n");
+            }
+
+            receiptBuilder.append("Service Cost: RM ").append(customer.getServiceCost()).append("\n")
+            .append("------------------------------------------------\n");
+        }
+
+        // Display receipt in a new JFrame or JTextArea
+        JTextArea receiptArea = new JTextArea(receiptBuilder.toString());
+        receiptArea.setEditable(false);
+        receiptArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        JScrollPane scrollPane = new JScrollPane(receiptArea);
+
+        JFrame receiptFrame = new JFrame("Receipts");
+        receiptFrame.setSize(500, 640);
+        receiptFrame.add(scrollPane);
+        receiptFrame.setLocationRelativeTo(this);
+        receiptFrame.setVisible(true);
+    }
+
+    private String queueToString(Queue<CustomerInfo> queue) {
+        StringBuilder sb = new StringBuilder();
+        for (CustomerInfo customer : queue) {
+            sb.append(customer.toString()).append("\n\n");  // Adding double newline for separation
+        }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(CoechellaService::new);
+    }
+}
