@@ -1,0 +1,56 @@
+public class ServiceInfo {
+    // Unique identifier for the ticket
+    private int serviceId;
+    // Name of the service type
+    private String serviceTypes;
+    // Cost for the service made
+    private double serviceCost;
+    // Date when the service was completed
+    private String serviceDate;
+    // Time estimation of service completed
+    private String estimatedCompletionTime;
+
+    // Constructor to initialize all fields in service information
+    public ServiceInfo(int serviceId, String serviceTypes, double serviceCost, String serviceDate, String estimatedCompletionTime) {
+        this.serviceId = serviceId;
+        this.serviceTypes = serviceTypes;
+        this.serviceCost = serviceCost;
+        this.serviceDate = serviceDate;
+        this.estimatedCompletionTime = estimatedCompletionTime;
+    }
+
+    // Return the unique Id of the service
+    public int getServiceId() {
+        return serviceId;
+    }
+
+    // Return the type of the service
+    public String getServiceTypes() {
+        return serviceTypes;
+    }
+
+    // Return the total cost of service
+    public double getServiceCost() {
+        return serviceCost;
+    }
+
+    // Return the date the service was completed
+    public String getServiceDate() {
+        return serviceDate;
+    }
+
+    // Return the estimated completion time
+    public String getEstimatedCompletionTime() {
+        return estimatedCompletionTime;
+    }
+
+    // Override the toString method to return a custom string representation
+    @Override
+    public String toString() {
+        return "Service ID: " + serviceId + "\n" +
+               "Service Type: " + serviceTypes + "\n" +
+               "Service Cost: RM " + serviceCost + "\n" +
+               "Service Date: " + serviceDate + "\n" +
+               "Estimated Completion Time: " + estimatedCompletionTime;
+    }
+}
